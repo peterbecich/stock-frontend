@@ -1,6 +1,7 @@
 module Main where
 
 import Prelude
+import Control.Monad
 import Control.Monad.Eff
 import Control.Monad.Eff.Class
 import Control.Monad.Eff.Console (CONSOLE, log)
@@ -13,17 +14,11 @@ import React.DOM.Props as RP
 import ReactDOM as RDOM
 import DOM (DOM)
 
+import Data.Newtype (wrap)
+
 import Control.Monad.Aff
 
--- import Control.Monad.Eff.Console (log)
--- import Control.Monad.Eff.Class (liftEff)
--- import Control.Monad.Aff (launchAff)
--- import Data.HTTP.Method (Method(..))
--- import Data.Either (Either(..))
--- import Network.HTTP.Affjax (affjax, defaultRequest)
-
 import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
--- import Network.HTTP.Affjax.Response (ResponseType(..))
 
 import Control.Monad.Trans.Class (lift)
 
@@ -43,7 +38,7 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 
 render :: T.Render State _ Action
 render dispatch _ state _ =
-  [ R.p' [ R.text "Enter stock name or ticker: " ]
+  [ R.p' [ R.text "Enter stock name/ticker: " ]
   , R.p' [ R.input [ RP.onChange \e -> dispatch (TextBox (unsafeEventValue e)) ] [] ]
   , R.p' [ R.button [ RP.onClick \_ -> dispatch Submit ] [ R.text "Submit text" ] ]
   --, R.p' [ R.button [ RP.onClick \_ -> dispatch 
@@ -57,11 +52,13 @@ render dispatch _ state _ =
   , R.p' [ R.text "Time: ", R.text state.time ]
   ]
 
-getTimeFromServer :: Aff _ String
+getTimeFromServer :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) String
 getTimeFromServer = do
-  res <- get "localhost:1234/users"
-  liftEff $ log "foo"
-  liftEff $ log res.response
+  res <- get "http://localhost:1234/time"
+  -- _ <- delay (wrap 500.0)
+  -- liftEff $ log $ "status: " <> show res.status
+  -- liftEff $ log $ "headers: " <> show res.headers
+  -- liftEff $ log $ "response: " <> show res.response
   pure res.response
 
 -- https://pursuit.purescript.org/packages/purescript-prelude/3.1.0/docs/Control.Monad#v:liftM1
@@ -83,7 +80,7 @@ main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
   _ <- log "Hello sailor!"
   _ <- launchAff $ do
-    res <- get "localhost:1234/users"
+    res <- get "http://localhost:1234/time"
     -- https://github.com/slamdata/purescript-affjax#introduction
     liftEff $ log res.response
     
