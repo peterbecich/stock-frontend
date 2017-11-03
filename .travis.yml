@@ -11,5 +11,8 @@ before_script:
   - npm install -g pulp bower
   - bower install
 
+script:
+  - pulp build
+  - pulp browserify --to static/Main.js
 
   
