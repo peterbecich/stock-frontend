@@ -26,8 +26,8 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: npm install purescript
-      - run: npm install pulp bower
+      - run: npm install -g purescript
+      - run: npm install -g pulp bower
       - run: npm install
       - run: bower install
       - run: pulp build
