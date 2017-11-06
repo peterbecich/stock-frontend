@@ -30,19 +30,19 @@ import Control.Monad.Trans.Class (lift)
 
 import Unsafe.Coerce
 
-data Action = Increment | Decrement | TextBox String | Submit | UpdateTime | GetRows
+data FooAction = Increment | Decrement | TextBox String | Submit | UpdateTime | GetRows
 
-type State = { counter :: Int, userInput :: String, userInputSubmitted :: String, time :: String, numRows :: Int }
+type FooState = { counter :: Int, userInput :: String, userInputSubmitted :: String, time :: String, numRows :: Int }
 
-initialState :: State
-initialState = { counter: 0, userInput: "hello", userInputSubmitted: "", time: "no time", numRows: 0 }
+initialFooState :: FooState
+initialFooState = { counter: 0, userInput: "hello", userInputSubmitted: "", time: "no time", numRows: 0 }
 
 -- http://blog.functorial.com/posts/2015-11-20-Thermite.html
 
 unsafeEventValue :: forall event. event -> String
 unsafeEventValue e = (unsafeCoerce e).target.value
 
-render :: T.Render State _ Action
+render :: T.Render FooState _ FooAction
 render dispatch _ state _ =
   [ R.p' [ R.text "Enter stock name/ticker: " ]
   , R.p' [ R.input [ RP.onChange \e -> dispatch (TextBox (unsafeEventValue e)) ] [] ]
@@ -78,7 +78,7 @@ getRandomIntFromServer = do
 
 -- https://pursuit.purescript.org/packages/purescript-prelude/3.1.0/docs/Control.Monad#v:liftM1
 
-performAction :: T.PerformAction _ State _ Action
+performAction :: T.PerformAction _ FooState _ FooAction
 -- action -> props -> state -> CoTransformer ...
 performAction Increment _ _ = void (T.cotransform (\state -> state { counter = state.counter + 1 }))
 performAction Decrement _ _ = void $ T.modifyState (\state -> state { counter = state.counter - 1 })
@@ -91,5 +91,5 @@ performAction GetRows _ _ = do
   i <- lift getRandomIntFromServer
   void $ T.modifyState(\state -> state { numRows = i })
 
-spec :: T.Spec _ State _ Action
-spec = T.simpleSpec performAction render
+fooSpec :: T.Spec _ FooState _ FooAction
+fooSpec = T.simpleSpec performAction render

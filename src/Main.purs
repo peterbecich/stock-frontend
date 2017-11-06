@@ -21,13 +21,20 @@ import Data.Lens.Prism.Either
 import Data.Tuple
 import Data.Either
 
-import Foo (initialState, spec, State, Action)
+import Foo (initialFooState, fooSpec, FooState, FooAction)
 
 import Timer (initialTimerState, timerSpec, TimerState, TimerAction)
 
+import TimerList (initialTimerListState, timerListSpec, TimerListState, TimerListAction)
+
+
+
 -- https://github.com/paf31/purescript-thermite/tree/v4.0.0#focus
-combinedFooTimerSpec :: T.Spec _ (Tuple State TimerState) _ (Either Action TimerAction)
-combinedFooTimerSpec = T.focus _1 _Left spec <> T.focus _2 _Right timerSpec
+-- combinedFooTimerSpec :: T.Spec _ (Tuple State TimerState) _ (Either Action TimerAction)
+-- combinedFooTimerSpec = T.focus _1 _Left spec <> T.focus _2 _Right timerSpec
+
+combinedFooTimerListSpec :: T.Spec _ (Tuple FooState TimerListState) _ (Either FooAction (Tuple Int TimerAction))
+combinedFooTimerListSpec = T.focus _1 _Left fooSpec <> T.focus _2 _Right timerListSpec
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
@@ -41,5 +48,7 @@ main = do
 
   -- _ <- T.defaultMain timerSpec initialTimerState unit
 
-  T.defaultMain combinedFooTimerSpec (Tuple initialState initialTimerState) unit
+  T.defaultMain combinedFooTimerListSpec (Tuple initialFooState initialTimerListState) unit
+    
+  --T.defaultMain timerListSpec initialTimerListState unit
   
