@@ -31,8 +31,13 @@ initialTimerState = { seconds: 60, ticking: false }
 timerRender :: T.Render TimerState _ TimerAction
 timerRender dispatch _ state _ =
   [ R.p'
-    [ R.button [ RP.onClick \_ -> dispatch StartDecrement ] [ R.text "Start timer" ]
-    ,  R.text "Seconds remaining: "
+    [ R.button [ RP.onClick \_ -> dispatch DecrementFiveSecond ] [ R.text "-5" ]
+    , R.button [ RP.onClick \_ -> dispatch DecrementSecond ] [ R.text "-1" ]      
+    , R.button [ RP.onClick \_ -> dispatch IncrementSecond ] [ R.text "+1" ]      
+    , R.button [ RP.onClick \_ -> dispatch IncrementFiveSecond ] [ R.text "+5" ]      
+    , R.button [ RP.onClick \_ -> dispatch StartDecrement ] [ R.text "Start timer" ]
+    --, R.text "\t"
+    , R.text "    Seconds remaining: "  -- improve this spacing
     , R.text (show state.seconds)
     ]
   ]
@@ -52,14 +57,22 @@ tickLoop = do
       _ <- liftEff $ log $ "seconds: " <> (show state'.seconds)
       if (state'.seconds > 0)
         then tickLoop
-        else pure unit
+        else void $ T.modifyState(\state -> state { ticking = false })
 
 performTimerAction :: T.PerformAction _ TimerState _ TimerAction
 performTimerAction StartDecrement _ state = startTick state
-performTimerAction DecrementSecond _ _ = unsafeCoerce unit
-performTimerAction DecrementFiveSecond _ _ = unsafeCoerce unit
-performTimerAction IncrementSecond _ _ = unsafeCoerce unit
-performTimerAction IncrementFiveSecond _ _ = unsafeCoerce unit
+performTimerAction DecrementSecond _ _ = void $ T.modifyState (
+  \state -> state { seconds = if state.seconds - 1 >=0 then state.seconds - 1 else state.seconds }
+  )
+performTimerAction DecrementFiveSecond _ _ = void $ T.modifyState (
+  \state -> state { seconds = if state.seconds - 5 >=0 then state.seconds - 5 else state.seconds }
+  )
+performTimerAction IncrementSecond _ _ = void $ T.modifyState (
+  \state -> state { seconds = state.seconds + 1 }
+  )
+performTimerAction IncrementFiveSecond _ _ = void $ T.modifyState (
+  \state -> state { seconds = state.seconds + 5 }
+  )
 
 timerSpec :: T.Spec _ TimerState _ TimerAction
 timerSpec = T.simpleSpec performTimerAction timerRender
