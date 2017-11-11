@@ -58,7 +58,3 @@ timerListSpec = T.foreach (\_ -> timerSpec)
 combinedTimerSpec :: T.Spec _ (Tuple TimerListState TimerListState) _ (Either TimerListAction (Tuple Int TimerAction))
 combinedTimerSpec = T.focus _1 _Left addTimerSpec <> T.focus _2 _Right timerListSpec
 
-
-
-
-

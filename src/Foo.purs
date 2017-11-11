@@ -30,12 +30,27 @@ import Control.Monad.Trans.Class (lift)
 
 import Unsafe.Coerce
 
-data FooAction = Increment | Decrement | TextBox String | Submit | UpdateTime | GetRows
+data FooAction = Increment
+               | Decrement
+               | TextBox String
+               | Submit
+               | UpdateTime
+               | GetRows
 
-type FooState = { counter :: Int, userInput :: String, userInputSubmitted :: String, time :: String, numRows :: Int }
+type FooState = { counter :: Int
+                , userInput :: String
+                , userInputSubmitted :: String
+                , time :: String
+                , numRows :: Int
+                }
 
 initialFooState :: FooState
-initialFooState = { counter: 0, userInput: "hello", userInputSubmitted: "", time: "no time", numRows: 0 }
+initialFooState = { counter: 0
+                  , userInput: "hello"
+                  , userInputSubmitted: ""
+                  , time: "no time"
+                  , numRows: 0
+                  }
 
 -- http://blog.functorial.com/posts/2015-11-20-Thermite.html
 
@@ -45,17 +60,29 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 render :: T.Render FooState _ FooAction
 render dispatch _ state _ =
   [ R.p' [ R.text "Enter stock name/ticker: " ]
-  , R.p' [ R.input [ RP.onChange \e -> dispatch (TextBox (unsafeEventValue e)) ] [] ]
-  , R.p' [ R.button [ RP.onClick \_ -> dispatch Submit ] [ R.text "Submit text" ] ]
-  , R.p' [ R.text "Value: ", R.text $ show state.counter]
+  , R.p' [
+       R.input [
+          RP.onChange \e -> dispatch (TextBox (unsafeEventValue e))
+          ] []
+       ]
+  , R.p' [
+       R.button [ RP.onClick \_ -> dispatch Submit ] [ R.text "Submit text" ]
+       ]
+  , R.p' [ R.text "Value: ", R.text $ show state.counter ]
   , R.p' [ R.button [ RP.onClick \_ -> dispatch Increment ] [ R.text "Increment" ]
          , R.button [ RP.onClick \_ -> dispatch Decrement ] [ R.text "Decrement" ]
          ]
   , R.p' [ R.text "User input: ", R.text state.userInput ]
   , R.p' [ R.text "User input submitted: ", R.text state.userInputSubmitted ]
-  , R.p' [ R.button [ RP.onClick \_ -> dispatch UpdateTime ] [ R.text "Update Time" ] ]
+  , R.p' [
+       R.button [
+          RP.onClick \_ -> dispatch UpdateTime
+          ] [ R.text "Update Time" ]
+       ]
   , R.p' [ R.text "Time: ", R.text state.time ]
-  , R.p' [ R.button [ RP.onClick \_ -> dispatch GetRows ] [ R.text "Get Rows" ] ]
+  , R.p' [
+       R.button [ RP.onClick \_ -> dispatch GetRows ] [ R.text "Get Rows" ]
+       ]
   , R.p' $ map (\_ -> (R.p' [R.text "row"])) (range 1 (state.numRows))
   ]
 
@@ -80,10 +107,14 @@ getRandomIntFromServer = do
 
 performAction :: T.PerformAction _ FooState _ FooAction
 -- action -> props -> state -> CoTransformer ...
-performAction Increment _ _ = void (T.cotransform (\state -> state { counter = state.counter + 1 }))
-performAction Decrement _ _ = void $ T.modifyState (\state -> state { counter = state.counter - 1 })
-performAction Submit props _ = void $ T.modifyState (\state -> state { userInputSubmitted = state.userInput })
-performAction (TextBox uInput) _ _ = void $ T.modifyState(\state -> state { userInput = uInput })
+performAction Increment _ _ =
+  void (T.cotransform (\state -> state { counter = state.counter + 1 }))
+performAction Decrement _ _ =
+  void $ T.modifyState (\state -> state { counter = state.counter - 1 })
+performAction Submit props _ =
+  void $ T.modifyState (\state -> state { userInputSubmitted = state.userInput })
+performAction (TextBox uInput) _ _ =
+  void $ T.modifyState(\state -> state { userInput = uInput })
 performAction UpdateTime _ _ = do
   t <- lift getTimeFromServer
   void $ T.modifyState(\state -> state { time = t })
