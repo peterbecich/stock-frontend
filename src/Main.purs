@@ -1,31 +1,23 @@
 module Main where
 
-import Prelude
 import Control.Monad
 import Control.Monad.Eff
 import Control.Monad.Eff.Class
-import Control.Monad.Eff.Console (CONSOLE, log)
-
-import Thermite as T
-import DOM (DOM)
-
-import Control.Monad.Aff (launchAff)
-
-import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
-
-import Control.Monad.Trans.Class (lift)
-
+import Data.Either
 import Data.Lens.Lens.Tuple
 import Data.Lens.Prism.Either
-
 import Data.Tuple
-import Data.Either
+import Prelude
 
+import Control.Monad.Aff (launchAff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Trans.Class (lift)
+import DOM (DOM)
 import Foo (initialFooState, fooSpec, FooState, FooAction)
-
+import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
+import Thermite as T
 import Timer (initialTimerState, timerSpec, TimerState, TimerAction)
-
-import TimerList (initialTimerListState, timerListSpec, TimerListState, TimerListAction)
+import TimerList (TimerListAction, TimerListState, combinedTimerSpec, initialTimerListState, timerListSpec)
 
 
 
@@ -48,7 +40,9 @@ main = do
 
   -- _ <- T.defaultMain timerSpec initialTimerState unit
 
-  T.defaultMain combinedFooTimerListSpec (Tuple initialFooState initialTimerListState) unit
+  --T.defaultMain combinedFooTimerListSpec (Tuple initialFooState initialTimerListState) unit
     
   --T.defaultMain timerListSpec initialTimerListState unit
+
+  T.defaultMain combinedTimerSpec (Tuple initialTimerListState initialTimerListState) unit
   
