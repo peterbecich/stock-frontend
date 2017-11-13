@@ -1,24 +1,16 @@
 module Stock where
 
-import Prelude
-
-import Data.Foreign.JSON
+import Data.Array
+import Data.Eq
 import Data.Foreign.Class
 import Data.Foreign.Generic
+import Data.Foreign.JSON
 import Data.Generic.Rep
-
+import Data.List
 import Data.Maybe
+import Data.Ord
 import Data.Show
-
-type AppState =
-  { query :: String
-  , mstock :: Maybe Stock
-  }
-
-data AppAction = SubmitQuery String
-
-initialAppState =
-  { query: "", mstock: Nothing }
+import Prelude
 
 newtype Stock = Stock
   { tickerSymbol :: String
@@ -39,5 +31,30 @@ instance decodeStock :: Decode Stock where
 instance showStock :: Show Stock where
   show (Stock { tickerSymbol, description }) =
     tickerSymbol <> ": " <> description
+
+derive instance eqStock :: Eq Stock
+
+-- https://leanpub.com/purescript/read#leanpub-auto-record-patterns-and-row-polymorphism
+instance ordStock :: Ord Stock where
+  compare :: Stock -> Stock -> Ordering
+  compare (Stock { tickerSymbol: tick1 }) (Stock { tickerSymbol: tick2 } ) =
+    compare tick1 tick2
+
+type AppState =
+  { query :: String
+  , mstock :: Maybe Stock
+  , correlated :: Array Stock
+  }
+
+data AppAction = SubmitQuery String
+
+stockA = Stock { tickerSymbol: "A", description: "stock A" }
+stockB = Stock { tickerSymbol: "B", description: "stock B" }
+stockC = Stock { tickerSymbol: "C", description: "stock C" }
+
+
+initialAppState =
+  { query: "", mstock: Nothing, correlated: [stockA, stockB, stockC] }
+
 
 

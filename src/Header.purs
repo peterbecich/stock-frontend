@@ -10,6 +10,8 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Except
 
+import Data.Array
+
 import Data.List.Types (NonEmptyList)
 import Data.Foreign
 import Data.Foreign.Generic
@@ -45,18 +47,14 @@ stockQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Ma
 stockQuery query = do
   res <- get ("http://localhost:1234/tickerQuery?q="<>query)
   liftEff $ log $ "response: " <> res.response
-  -- let
-  --   parsed :: Either MultipleErrors Stock
-  --   parsed = readJSON res.response
+
   let
     eForeign :: Either (NonEmptyList ForeignError) Foreign
     eForeign = runExcept (parseJSON res.response)
 
     eParsed :: Either (NonEmptyList ForeignError) Stock
     eParsed = runExcept (decodeJSON res.response)
-  -- liftEff $ log $ case eParsed of
-  --   (Right stock) -> show stock
-  --   (Left _) -> "error"
+
   pure $ hush eParsed
     
 
@@ -66,6 +64,13 @@ header = T.simpleSpec performAction render
     performAction :: T.PerformAction _ AppState _ AppAction
     performAction (SubmitQuery query') _ _ = do
       mstock' <- lift $ stockQuery query'
+      case mstock' of
+        (Just stock') -> void $ T.modifyState (\appState ->
+                                                appState {
+                                                  correlated = insert stock' (appState.correlated)
+                                                  }
+                                              )
+        Nothing -> void $ T.modifyState id
       void $ T.modifyState (\appState ->
                              appState {
                                query = query'

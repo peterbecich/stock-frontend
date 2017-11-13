@@ -17,6 +17,6 @@ footer = T.simpleSpec T.defaultPerformAction render
     -- performAction FooterAction =
     --   void $ T.modifyState id
     render :: T.Render _ _ _
-    render dispatch _ _ _ =
+    render _ _ _ _ =
       [ R.h1' [R.text "Footer" ] ]
 
