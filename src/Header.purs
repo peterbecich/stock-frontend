@@ -56,7 +56,21 @@ stockQuery query = do
     eParsed = runExcept (decodeJSON res.response)
 
   pure $ hush eParsed
-    
+
+
+correlatedQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Array Stock)
+correlatedQuery query = do
+  liftEff $ log $ "query: "<>query
+  let uri = "http://localhost:1234/correlated?q="<>query
+  liftEff $ log uri
+  res <- get uri 
+  let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
+      eParsed = runExcept (decodeJSON res.response)
+
+      parsed :: Array Stock
+      parsed = either (\_ -> []) id eParsed
+
+  pure parsed
 
 header :: T.Spec _ AppState _ AppAction
 header = T.simpleSpec performAction render
@@ -64,18 +78,17 @@ header = T.simpleSpec performAction render
     performAction :: T.PerformAction _ AppState _ AppAction
     performAction (SubmitQuery query') _ _ = do
       mstock' <- lift $ stockQuery query'
-      case mstock' of
-        (Just stock') -> void $ T.modifyState (\appState ->
-                                                appState {
-                                                  correlated = insert stock' (appState.correlated)
-                                                  }
-                                              )
-        Nothing -> void $ T.modifyState id
+      correlated' <- lift $ correlatedQuery query'
       void $ T.modifyState (\appState ->
                              appState {
                                query = query'
                                , mstock = mstock'
                                })
+      void $ T.modifyState (\appState ->
+                             appState {
+                               correlated = correlated'
+                               }
+                           )
        
     render :: T.Render _ _ _
     render dispatch _ state _ =
@@ -83,7 +96,7 @@ header = T.simpleSpec performAction render
       , R.p' [ R.text "Search for a stock by name or ticker symbol" ]
       , R.p' [
            R.input [
-              RP.onSubmit \e ->
+              RP.onChange \e ->
                dispatch (SubmitQuery (unsafeEventValue e))
               ] []
            , R.button [

@@ -30,6 +30,7 @@ correlatedList = T.simpleSpec T.defaultPerformAction render
       where
         correlated :: Array _
         correlated = map (\(Stock { tickerSymbol, description }) ->
-                           (R.p' [(R.text tickerSymbol)])) state.correlated
+                           (R.p' [R.text tickerSymbol, R.text ": ", R.text description])
+                         ) state.correlated
 
         -- correlated = map (\_ -> (R.text "foo")) state.correlated

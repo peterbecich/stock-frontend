@@ -5,3 +5,5 @@
 # stock-frontend
 
 Part of demo project for web service.  Data from [https://www.alphavantage.co/](https://www.alphavantage.co/)
+
+[https://peterbecich.github.io/stock-frontend/index.html](https://peterbecich.github.io/stock-frontend/index.html)
