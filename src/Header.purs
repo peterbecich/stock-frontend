@@ -46,8 +46,6 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 stockQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Maybe Stock)
 stockQuery query = do
   res <- get ("http://localhost:1234/tickerQuery?q="<>query)
-  liftEff $ log $ "response: " <> res.response
-
   let
     eForeign :: Either (NonEmptyList ForeignError) Foreign
     eForeign = runExcept (parseJSON res.response)
@@ -58,11 +56,9 @@ stockQuery query = do
   pure $ hush eParsed
 
 
-correlatedQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Array Stock)
-correlatedQuery query = do
-  liftEff $ log $ "query: "<>query
-  let uri = "http://localhost:1234/correlated?q="<>query
-  liftEff $ log uri
+correlatedQuery :: forall e. String -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Array Stock)
+correlatedQuery query timespan = do
+  let uri = "http://localhost:1234/correlated?q="<>query<>"&timespan="<>(show timespan)
   res <- get uri 
   let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
       eParsed = runExcept (decodeJSON res.response)
@@ -78,7 +74,7 @@ header = T.simpleSpec performAction render
     performAction :: T.PerformAction _ AppState _ AppAction
     performAction (SubmitQuery query') _ _ = do
       mstock' <- lift $ stockQuery query'
-      correlated' <- lift $ correlatedQuery query'
+      correlated' <- lift $ correlatedQuery query' 60
       void $ T.modifyState (\appState ->
                              appState {
                                query = query'
@@ -104,7 +100,18 @@ header = T.simpleSpec performAction render
                dispatch (SubmitQuery (state.query))
               ] [ R.text "Submit" ]
            ]
-      ] <> case state.mstock of
+      ]
+
+      <> [ R.p' [ R.text "Days"
+                , R.input [ RP.defaultValue (show state.daysCorrelated) ] []
+                , R.text "Hours"
+                , R.input [ RP.defaultValue (show state.hoursCorrelated) ] []
+                , R.text "Minutes"
+                , R.input [ RP.defaultValue (show state.minutesCorrelated) ] []
+                ]
+         ]
+
+      <> case state.mstock of
         (Just (Stock { tickerSymbol, description })) ->
           [ R.p' [ R.text tickerSymbol, R.text ": ", R.text description ] ]
         Nothing -> []

@@ -28822,7 +28822,9 @@ var PS = {};
   };
   var onChange = function (f) {
       return $foreign.unsafeMkProps("onChange")(React.handle(f));
-  };
+  };                                          
+  var defaultValue = $foreign.unsafeMkProps("defaultValue");
+  exports["defaultValue"] = defaultValue;
   exports["onChange"] = onChange;
   exports["onClick"] = onClick;
   exports["unsafeFromPropsArray"] = $foreign.unsafeFromPropsArray;
@@ -29804,6 +29806,7 @@ var PS = {};
   var Data_Maybe = PS["Data.Maybe"];
   var Data_Ord = PS["Data.Ord"];
   var Data_Semigroup = PS["Data.Semigroup"];
+  var Data_Semiring = PS["Data.Semiring"];
   var Data_Show = PS["Data.Show"];
   var Data_Symbol = PS["Data.Symbol"];
   var Prelude = PS["Prelude"];
@@ -29831,7 +29834,11 @@ var PS = {};
   var initialAppState = {
       query: "", 
       mstock: Data_Maybe.Nothing.value, 
-      correlated: [ stockA, stockB, stockC ]
+      correlated: [ stockA, stockB, stockC ], 
+      daysCorrelated: 1, 
+      hoursCorrelated: 0, 
+      minutesCorrelated: 0, 
+      timespanCorrelatedMinutes: 24 * 60 | 0
   };
   var genericStock = new Data_Generic_Rep.Generic(function (x) {
       return new Data_Generic_Rep.Product(x.description, x.tickerSymbol);
@@ -30967,6 +30974,7 @@ var PS = {};
   var Data_List_Types = PS["Data.List.Types"];
   var Data_Maybe = PS["Data.Maybe"];
   var Data_Semigroup = PS["Data.Semigroup"];
+  var Data_Show = PS["Data.Show"];
   var Network_HTTP_Affjax = PS["Network.HTTP.Affjax"];
   var Network_HTTP_Affjax_Response = PS["Network.HTTP.Affjax.Response"];
   var Prelude = PS["Prelude"];
@@ -30982,26 +30990,22 @@ var PS = {};
   };
   var stockQuery = function (query) {
       return Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)("http://localhost:1234/tickerQuery?q=" + query))(function (v) {
-          return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("response: " + v.response)))(function () {
-              var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Stock.decodeStock)(v.response));
-              var eForeign = Control_Monad_Except.runExcept(Data_Foreign_JSON.parseJSON(v.response));
-              return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Either.hush(eParsed));
-          });
+          var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Stock.decodeStock)(v.response));
+          var eForeign = Control_Monad_Except.runExcept(Data_Foreign_JSON.parseJSON(v.response));
+          return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Data_Either.hush(eParsed));
       });
   };
   var correlatedQuery = function (query) {
-      return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("query: " + query)))(function () {
-          var uri = "http://localhost:1234/correlated?q=" + query;
-          return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(uri)))(function () {
-              return Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(uri))(function (v) {
-                  var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.arrayDecode(Stock.decodeStock))(v.response));
-                  var parsed = Data_Either.either(function (v1) {
-                      return [  ];
-                  })(Control_Category.id(Control_Category.categoryFn))(eParsed);
-                  return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(parsed);
-              });
+      return function (timespan) {
+          var uri = "http://localhost:1234/correlated?q=" + (query + ("&timespan=" + Data_Show.show(Data_Show.showInt)(timespan)));
+          return Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(uri))(function (v) {
+              var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.arrayDecode(Stock.decodeStock))(v.response));
+              var parsed = Data_Either.either(function (v1) {
+                  return [  ];
+              })(Control_Category.id(Control_Category.categoryFn))(eParsed);
+              return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(parsed);
           });
-      });
+      };
   };
   var header = (function () {
       var render = function (dispatch) {
@@ -31012,15 +31016,15 @@ var PS = {};
                           return dispatch(new Stock.SubmitQuery(unsafeEventValue(e)));
                       }) ])([  ]), React_DOM.button([ React_DOM_Props.onClick(function (v2) {
                           return dispatch(new Stock.SubmitQuery(state.query));
-                      }) ])([ React_DOM.text("Submit") ]) ]) ])((function () {
+                      }) ])([ React_DOM.text("Submit") ]) ]) ])(Data_Semigroup.append(Data_Semigroup.semigroupArray)([ React_DOM["p'"]([ React_DOM.text("Days"), React_DOM.input([ React_DOM_Props.defaultValue(Data_Show.show(Data_Show.showInt)(state.daysCorrelated)) ])([  ]), React_DOM.text("Hours"), React_DOM.input([ React_DOM_Props.defaultValue(Data_Show.show(Data_Show.showInt)(state.hoursCorrelated)) ])([  ]), React_DOM.text("Minutes"), React_DOM.input([ React_DOM_Props.defaultValue(Data_Show.show(Data_Show.showInt)(state.minutesCorrelated)) ])([  ]) ]) ])((function () {
                           if (state.mstock instanceof Data_Maybe.Just) {
                               return [ React_DOM["p'"]([ React_DOM.text(state.mstock.value0.tickerSymbol), React_DOM.text(": "), React_DOM.text(state.mstock.value0.description) ]) ];
                           };
                           if (state.mstock instanceof Data_Maybe.Nothing) {
                               return [  ];
                           };
-                          throw new Error("Failed pattern match at Header line 107, column 12 - line 110, column 21: " + [ state.mstock.constructor.name ]);
-                      })());
+                          throw new Error("Failed pattern match at Header line 114, column 10 - line 117, column 21: " + [ state.mstock.constructor.name ]);
+                      })()));
                   };
               };
           };
@@ -31029,7 +31033,7 @@ var PS = {};
           return function (v1) {
               return function (v2) {
                   return Control_Bind.bind(Control_Monad_Free_Trans.bindFreeT(Control_Coroutine.functorCoTransform)(Control_Monad_Aff.monadAff))(Control_Monad_Trans_Class.lift(Control_Monad_Free_Trans.monadTransFreeT(Control_Coroutine.functorCoTransform))(Control_Monad_Aff.monadAff)(stockQuery(v.value0)))(function (v3) {
-                      return Control_Bind.bind(Control_Monad_Free_Trans.bindFreeT(Control_Coroutine.functorCoTransform)(Control_Monad_Aff.monadAff))(Control_Monad_Trans_Class.lift(Control_Monad_Free_Trans.monadTransFreeT(Control_Coroutine.functorCoTransform))(Control_Monad_Aff.monadAff)(correlatedQuery(v.value0)))(function (v4) {
+                      return Control_Bind.bind(Control_Monad_Free_Trans.bindFreeT(Control_Coroutine.functorCoTransform)(Control_Monad_Aff.monadAff))(Control_Monad_Trans_Class.lift(Control_Monad_Free_Trans.monadTransFreeT(Control_Coroutine.functorCoTransform))(Control_Monad_Aff.monadAff)(correlatedQuery(v.value0)(60)))(function (v4) {
                           return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Free_Trans.bindFreeT(Control_Coroutine.functorCoTransform)(Control_Monad_Aff.monadAff))(Data_Functor["void"](Control_Monad_Free_Trans.functorFreeT(Control_Coroutine.functorCoTransform)(Control_Monad_Aff.functorAff))(Thermite.modifyState(function (appState) {
                               var $24 = {};
                               for (var $25 in appState) {

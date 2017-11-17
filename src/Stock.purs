@@ -44,6 +44,10 @@ type AppState =
   { query :: String
   , mstock :: Maybe Stock
   , correlated :: Array Stock
+  , daysCorrelated :: Int
+  , hoursCorrelated :: Int
+  , minutesCorrelated :: Int
+  , timespanCorrelatedMinutes :: Int
   }
 
 data AppAction = SubmitQuery String
@@ -54,7 +58,14 @@ stockC = Stock { tickerSymbol: "C", description: "stock C" }
 
 
 initialAppState =
-  { query: "", mstock: Nothing, correlated: [stockA, stockB, stockC] }
+  { query: ""
+  , mstock: Nothing
+  , correlated: [stockA, stockB, stockC]
+  , daysCorrelated: 1
+  , hoursCorrelated: 0
+  , minutesCorrelated: 0
+  , timespanCorrelatedMinutes: 24*60
+  }
 
 
 
