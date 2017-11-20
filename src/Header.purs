@@ -30,8 +30,6 @@ import Simple.JSON
 import Thermite as T
 import Unsafe.Coerce
 
-import Stock
-
 -- data HeaderState = HeaderState
 -- data HeaderAction = HeaderAction
 
@@ -43,78 +41,78 @@ unsafeEventValue e = (unsafeCoerce e).target.value
 -- https://leanpub.com/purescript/read#leanpub-auto-working-with-untyped-data
 -- type F = Except (NonEmptyList ForeignError)
 
-stockQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Maybe Stock)
-stockQuery query = do
-  res <- get ("http://localhost:1234/tickerQuery?q="<>query)
-  let
-    eForeign :: Either (NonEmptyList ForeignError) Foreign
-    eForeign = runExcept (parseJSON res.response)
+-- stockQuery :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Maybe Stock)
+-- stockQuery query = do
+--   res <- get ("http://localhost:1234/tickerQuery?q="<>query)
+--   let
+--     eForeign :: Either (NonEmptyList ForeignError) Foreign
+--     eForeign = runExcept (parseJSON res.response)
 
-    eParsed :: Either (NonEmptyList ForeignError) Stock
-    eParsed = runExcept (decodeJSON res.response)
+--     eParsed :: Either (NonEmptyList ForeignError) Stock
+--     eParsed = runExcept (decodeJSON res.response)
 
-  pure $ hush eParsed
+--   pure $ hush eParsed
 
 
-correlatedQuery :: forall e. String -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Array Stock)
-correlatedQuery query timespan = do
-  let uri = "http://localhost:1234/correlated?q="<>query<>"&timespan="<>(show timespan)
-  res <- get uri 
-  let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
-      eParsed = runExcept (decodeJSON res.response)
+-- correlatedQuery :: forall e. String -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Array Stock)
+-- correlatedQuery query timespan = do
+--   let uri = "http://localhost:1234/correlated?q="<>query<>"&timespan="<>(show timespan)
+--   res <- get uri 
+--   let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
+--       eParsed = runExcept (decodeJSON res.response)
 
-      parsed :: Array Stock
-      parsed = either (\_ -> []) id eParsed
+--       parsed :: Array Stock
+--       parsed = either (\_ -> []) id eParsed
 
-  pure parsed
+--   pure parsed
 
-header :: T.Spec _ AppState _ AppAction
-header = T.simpleSpec performAction render
-  where
-    performAction :: T.PerformAction _ AppState _ AppAction
-    performAction (SubmitQuery query') _ _ = do
-      mstock' <- lift $ stockQuery query'
-      correlated' <- lift $ correlatedQuery query' 60
-      void $ T.modifyState (\appState ->
-                             appState {
-                               query = query'
-                               , mstock = mstock'
-                               })
-      void $ T.modifyState (\appState ->
-                             appState {
-                               correlated = correlated'
-                               }
-                           )
+-- header :: T.Spec _ AppState _ AppAction
+-- header = T.simpleSpec performAction render
+--   where
+--     performAction :: T.PerformAction _ AppState _ AppAction
+--     performAction (SubmitQuery query') _ _ = do
+--       mstock' <- lift $ stockQuery query'
+--       correlated' <- lift $ correlatedQuery query' 60
+--       void $ T.modifyState (\appState ->
+--                              appState {
+--                                query = query'
+--                                , mstock = mstock'
+--                                })
+--       void $ T.modifyState (\appState ->
+--                              appState {
+--                                correlated = correlated'
+--                                }
+--                            )
        
-    render :: T.Render _ _ _
-    render dispatch _ state _ =
-      [ R.h1' [R.text "Header" ]
-      , R.p' [ R.text "Search for a stock by name or ticker symbol" ]
-      , R.p' [
-           R.input [
-              RP.onChange \e ->
-               dispatch (SubmitQuery (unsafeEventValue e))
-              ] []
-           , R.button [
-              RP.onClick \_ ->
-               dispatch (SubmitQuery (state.query))
-              ] [ R.text "Submit" ]
-           ]
-      ]
+--     render :: T.Render _ _ _
+--     render dispatch _ state _ =
+--       [ R.h1' [R.text "Header" ]
+--       , R.p' [ R.text "Search for a stock by name or ticker symbol" ]
+--       , R.p' [
+--            R.input [
+--               RP.onChange \e ->
+--                dispatch (SubmitQuery (unsafeEventValue e))
+--               ] []
+--            , R.button [
+--               RP.onClick \_ ->
+--                dispatch (SubmitQuery (state.query))
+--               ] [ R.text "Submit" ]
+--            ]
+--       ]
 
-      <> [ R.p' [ R.text "Days"
-                , R.input [ RP.defaultValue (show state.daysCorrelated) ] []
-                , R.text "Hours"
-                , R.input [ RP.defaultValue (show state.hoursCorrelated) ] []
-                , R.text "Minutes"
-                , R.input [ RP.defaultValue (show state.minutesCorrelated) ] []
-                ]
-         ]
+--       <> [ R.p' [ R.text "Days"
+--                 , R.input [ RP.defaultValue (show state.daysCorrelated) ] []
+--                 , R.text "Hours"
+--                 , R.input [ RP.defaultValue (show state.hoursCorrelated) ] []
+--                 , R.text "Minutes"
+--                 , R.input [ RP.defaultValue (show state.minutesCorrelated) ] []
+--                 ]
+--          ]
 
-      <> case state.mstock of
-        (Just (Stock { tickerSymbol, description })) ->
-          [ R.p' [ R.text tickerSymbol, R.text ": ", R.text description ] ]
-        Nothing -> []
+--       <> case state.mstock of
+--         (Just (Stock { tickerSymbol, description })) ->
+--           [ R.p' [ R.text tickerSymbol, R.text ": ", R.text description ] ]
+--         Nothing -> []
 
 -- http://try.purescript.org/?gist=f5f273e4c5e4161fceff&backend=thermite&session=87ef2d8b-4fab-2175-2a20-38042f523ff7
 
