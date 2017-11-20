@@ -31090,10 +31090,16 @@ var PS = {};
   var Types_Stock = PS["Types.Stock"];        
   var main = function __do() {
       Control_Monad_Eff_Console.log("Hello sailor!")();
-      var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)("http://localhost:1234/stocks"))(function (v) {
-          var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.arrayDecode(Types_Stock.decodeStock))(v.response));
+      var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)("http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"))(function (v) {
+          var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Types_Stock.decodeStock)(v.response));
+          return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Either.showEither(Data_List_Types.showNonEmptyList(Data_Foreign.showForeignError))(Types_Stock.showStock))(eParsed))))(function () {
+              return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(eParsed);
+          });
+      }))();
+      var v1 = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)("http://localhost:1234/stocks"))(function (v1) {
+          var eParsed = Control_Monad_Except.runExcept(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.arrayDecode(Types_Stock.decodeStock))(v1.response));
           return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Either.showEither(Data_List_Types.showNonEmptyList(Data_Foreign.showForeignError))(Data_Show.showArray(Types_Stock.showStock)))(eParsed))))(function () {
-              var arrStock = Data_Either.either(function (v1) {
+              var arrStock = Data_Either.either(function (v2) {
                   return [  ];
               })(Control_Category.id(Control_Category.categoryFn))(eParsed);
               return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("number of stocks: " + Data_Show.show(Data_Show.showInt)(Data_Array.length(arrStock)))))(function () {

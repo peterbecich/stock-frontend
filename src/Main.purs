@@ -50,6 +50,14 @@ main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
   log "Hello sailor!"
 
+  stock <- launchAff $ do
+    res <- get "http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"
+    let eParsed :: Either (NonEmptyList ForeignError) Stock
+        eParsed = runExcept (decodeJSON res.response)
+    liftEff $ log $ show eParsed
+    pure eParsed
+
+
   stocks <- launchAff $ do
     res <- get "http://localhost:1234/stocks"
     let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
