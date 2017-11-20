@@ -7,7 +7,8 @@ import Control.Monad.Aff
 import Control.Monad.Eff
 import Control.Monad.Eff.Class
 import Data.Maybe
-import Data.List
+--import Data.List
+import Data.Array
 import Data.Tuple
 import Data.Either
 
@@ -23,6 +24,21 @@ import React.DOM.Props as RP
 import Thermite as T
 import Unsafe.Coerce (unsafeCoerce)
 
+import Types.Stock
+import Types.Exchange
+
+type StockListState = Array Stock
+
+initialStockListState :: StockListState
+initialStockListState = fromFoldable []
+
+stockList :: T.Spec _ StockListState _ _
+stockList = T.simpleSpec T.defaultPerformAction render
+  where
+
+    render :: T.Render _ _ _
+    render dispatch _ state _ =
+      [ R.h1' [R.text "Stock List" ] ]
 
 
 

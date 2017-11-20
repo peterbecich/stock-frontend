@@ -31,14 +31,9 @@ newtype Stock = Stock
 
 derive instance genericStock :: Generic Stock _
 
--- instance showStock :: Show Stock where
---   show (Stock { stockId: sid
---               , tickerSymbol: sym
---               , description: descrp
---               , exchange: exch
---                 | _
---               }) =
---     sym <> ": " <> descrp
+instance showStock :: Show Stock where
+  show (Stock stock) =
+    stock.symbol <> ": " <> stock.description
 
 derive instance eqStock :: Eq Stock
 
