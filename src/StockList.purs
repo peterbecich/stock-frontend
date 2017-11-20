@@ -30,15 +30,19 @@ import Types.Exchange
 type StockListState = Array Stock
 
 initialStockListState :: StockListState
-initialStockListState = fromFoldable []
+initialStockListState = []
 
 stockList :: T.Spec _ StockListState _ _
 stockList = T.simpleSpec T.defaultPerformAction render
   where
 
-    render :: T.Render _ _ _
-    render dispatch _ state _ =
-      [ R.h1' [R.text "Stock List" ] ]
+    render :: T.Render StockListState _ _
+    render _ _ stockList _ =
+      [ R.h1' [R.text "Stock List" ]
+      , R.p' [R.text "Number of stocks: "
+             , R.text (show (length stockList))
+             ]
+      ]
 
 
 

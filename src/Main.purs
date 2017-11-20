@@ -16,6 +16,7 @@ import Data.Foreign
 import Data.Foreign.JSON
 import Data.Foreign.Generic
 
+import Control.Monad.Aff
 import Control.Monad.Except
 
 import Control.Monad.Aff (launchAff)
@@ -26,74 +27,39 @@ import Foo (initialFooState, fooSpec, FooState, FooAction)
 import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 import Thermite as T
 
-
 import Types.Stock
 import Types.Exchange
 import StockList
 
--- import Timer (initialTimerState, timerSpec, TimerState, TimerAction)
--- import TimerList (TimerListAction, TimerListState, combinedTimerSpec, initialTimerListState, timerListSpec)
+-- getStock = do
+--   res <- get "http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"
+--   let eParsed :: Either (NonEmptyList ForeignError) Stock
+--       eParsed = runExcept (decodeJSON res.response)
+--   liftEff $ log $ show eParsed
+--   pure eParsed
 
--- import Header
--- import CorrelatedList
--- import Footer
-
---import StockList
-
-
-
--- header and footer must have the same type to be folded into a single Spec
--- mainSpec :: T.Spec _ _ _ _
--- mainSpec = fold [header, correlatedList, footer]
+getStocks :: forall e. Aff (ajax :: AJAX | e) (Array Stock)
+getStocks = do
+  res <- get "http://localhost:1234/stocks"
+  let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
+      eParsed = runExcept (decodeJSON res.response)
+  -- TODO improve this!
+  let
+    arrStock = either (\_ -> []) id eParsed
+  pure arrStock
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
   log "Hello sailor!"
 
-  stock <- launchAff $ do
-    res <- get "http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"
-    let eParsed :: Either (NonEmptyList ForeignError) Stock
-        eParsed = runExcept (decodeJSON res.response)
-    liftEff $ log $ show eParsed
-    pure eParsed
-
-
-  stocks <- launchAff $ do
-    res <- get "http://localhost:1234/stocks"
-    let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
-        eParsed = runExcept (decodeJSON res.response)
-    liftEff $ log $ show eParsed
-        -- improve this!
-    let
-        arrStock = either (\_ -> []) id eParsed
-    liftEff $ log $ "number of stocks: " <> show (length arrStock)
-    pure arrStock
+  -- _ <- launchAff $ do
+  --   stocks <- getStocks
+  --   liftEff $ log $ show stocks
   
-  T.defaultMain stockList [] unit
-
--- type AppState =
---   { query :: String
---   , mstock :: Maybe Stock
---   , correlated :: Array Stock
---   , daysCorrelated :: Int
---   , hoursCorrelated :: Int
---   , minutesCorrelated :: Int
---   , timespanCorrelatedMinutes :: Int
---   }
-
--- data AppAction = SubmitQuery String
-
--- stockA = Stock { tickerSymbol: "A", description: "stock A" }
--- stockB = Stock { tickerSymbol: "B", description: "stock B" }
--- stockC = Stock { tickerSymbol: "C", description: "stock C" }
-
-
--- initialAppState =
---   { query: ""
---   , mstock: Nothing
---   , correlated: [stockA, stockB, stockC]
---   , daysCorrelated: 1
---   , hoursCorrelated: 0
---   , minutesCorrelated: 0
---   , timespanCorrelatedMinutes: 24*60
---   }
+  -- https://github.com/slamdata/purescript-aff#forking  
+  _ <- launchAff $ do
+    stocks <- getStocks
+    liftEff $ log $ "retrieved stocks: " <> show (length stocks)
+    liftEff $ T.defaultMain stockList stocks unit
+  pure unit
+  
