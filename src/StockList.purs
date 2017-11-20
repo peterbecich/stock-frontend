@@ -36,13 +36,24 @@ stockList :: T.Spec _ StockListState _ _
 stockList = T.simpleSpec T.defaultPerformAction render
   where
 
+    stockRender :: Stock -> R.ReactElement
+    stockRender (Stock stock) =
+      R.p' [ R.text stock.symbol
+           , R.text ": "
+           , R.text stock.description
+           ]
+
+    stockReactElements :: Array Stock -> Array R.ReactElement
+    stockReactElements stockList =
+      stockRender <$> stockList
+    
     render :: T.Render StockListState _ _
     render _ _ stockList _ =
-      [ R.h1' [R.text "Stock List" ]
-      , R.p' [R.text "Number of stocks: "
+      [ R.h1' [ R.text "Stock List" ]
+      , R.p' [ R.text "Number of stocks: "
              , R.text (show (length stockList))
              ]
-      ]
+      ] <> stockReactElements stockList
 
 
 
