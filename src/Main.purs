@@ -27,9 +27,11 @@ import Foo (initialFooState, fooSpec, FooState, FooAction)
 import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 import Thermite as T
 
+import Types.MostRecentTick
 import Types.Stock
 import Types.Exchange
 import StockList
+
 
 -- getStock = do
 --   res <- get "http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"
@@ -48,18 +50,25 @@ getStocks = do
     arrStock = either (\_ -> []) id eParsed
   pure arrStock
 
+getMostRecentTicks :: forall e. Aff (ajax :: AJAX | e) (Array MostRecentTick)
+getMostRecentTicks = do
+  res <- get "http://localhost:1234/latestTickerTimestamps"
+  let eParsed :: Either (NonEmptyList ForeignError) (Array MostRecentTick)
+      eParsed = runExcept (decodeJSON res.response)
+  -- TODO improve this!
+  let
+    arrMRT = either (\_ -> []) id eParsed
+  pure arrMRT
+
+
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
   log "Hello sailor!"
-
-  -- _ <- launchAff $ do
-  --   stocks <- getStocks
-  --   liftEff $ log $ show stocks
-  
-  -- https://github.com/slamdata/purescript-aff#forking  
   _ <- launchAff $ do
     stocks <- getStocks
-    liftEff $ log $ "retrieved stocks: " <> show (length stocks)
-    liftEff $ T.defaultMain stockList stocks unit
+    mrts <- getMostRecentTicks
+    _ <- liftEff $ log $ "retrieved stocks: " <> show (length stocks)
+    liftEff $ T.defaultMain stockList initialStockListState unit
+    
   pure unit
   

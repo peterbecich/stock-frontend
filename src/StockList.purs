@@ -26,11 +26,16 @@ import Unsafe.Coerce (unsafeCoerce)
 
 import Types.Stock
 import Types.Exchange
+import Types.MostRecentTick
 
-type StockListState = Array Stock
+type StockListState = { stocks :: Array Stock
+                      , mostRecentTicks :: Array MostRecentTick
+                      }
 
 initialStockListState :: StockListState
-initialStockListState = []
+initialStockListState = { stocks: []
+                        , mostRecentTicks: []
+                        }
 
 stockList :: T.Spec _ StockListState _ _
 stockList = T.simpleSpec T.defaultPerformAction render
@@ -48,13 +53,11 @@ stockList = T.simpleSpec T.defaultPerformAction render
       stockRender <$> stockList
     
     render :: T.Render StockListState _ _
-    render _ _ stockList _ =
+    render _ _ stockListState _ =
       [ R.h1' [ R.text "Stock List" ]
       , R.p' [ R.text "Number of stocks: "
-             , R.text (show (length stockList))
+             , R.text (show (length stockListState.stocks))
              ]
-      ] <> stockReactElements stockList
-
-
+      ] <> stockReactElements (stockListState.stocks)
 
 

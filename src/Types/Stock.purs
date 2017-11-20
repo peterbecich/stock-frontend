@@ -19,8 +19,7 @@ import Data.Identity
 import Prelude
 
 import Types.Exchange
-
-newtype UUID' = UUID' UUID
+import Types.UUIDWrapped
 
 newtype Stock = Stock
   { stockId :: UUID'
@@ -42,19 +41,6 @@ derive instance eqStock :: Eq Stock
 --   compare :: Stock -> Stock -> Ordering
 --   compare (Stock { tickerSymbol: tick1 }) (Stock { tickerSymbol: tick2 } ) =
 --     compare tick1 tick2
-
-uuidDecodeError = ForeignError "Decode UUID error"
-
--- F = Except Multipleerrors
-instance decodeUUID :: Decode UUID' where
-  decode uuidForeign = do
-    uuidStr <- decode uuidForeign :: ExceptT (NonEmptyList ForeignError) Identity String
-    case (parseUUID uuidStr) of
-      (Just uuid) -> except (pure (UUID' uuid))
-      (Nothing) -> except (Left (pure uuidDecodeError))
-
-instance eqUUID :: Eq UUID' where
-  eq (UUID' uuid1) (UUID' uuid2) = uuid1 == uuid2
 
 
 instance decodeStock :: Decode Stock where
