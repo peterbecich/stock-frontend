@@ -30698,6 +30698,62 @@ var PS = {};
               return "(fromFoldable " + (Data_Show.show(Data_Show.showArray(Data_Tuple.showTuple(dictShow)(dictShow1)))(toAscArray(m)) + ")");
           });
       };
+  };
+  var lookup = function (dictOrd) {
+      return function (k) {
+          var comp = Data_Ord.compare(dictOrd);
+          var go = function ($copy_v) {
+              var $tco_done = false;
+              var $tco_result;
+              function $tco_loop(v) {
+                  if (v instanceof Leaf) {
+                      $tco_done = true;
+                      return Data_Maybe.Nothing.value;
+                  };
+                  if (v instanceof Two) {
+                      var v2 = comp(k)(v.value1);
+                      if (v2 instanceof Data_Ordering.EQ) {
+                          $tco_done = true;
+                          return new Data_Maybe.Just(v.value2);
+                      };
+                      if (v2 instanceof Data_Ordering.LT) {
+                          $copy_v = v.value0;
+                          return;
+                      };
+                      $copy_v = v.value3;
+                      return;
+                  };
+                  if (v instanceof Three) {
+                      var v3 = comp(k)(v.value1);
+                      if (v3 instanceof Data_Ordering.EQ) {
+                          $tco_done = true;
+                          return new Data_Maybe.Just(v.value2);
+                      };
+                      var v4 = comp(k)(v.value4);
+                      if (v4 instanceof Data_Ordering.EQ) {
+                          $tco_done = true;
+                          return new Data_Maybe.Just(v.value5);
+                      };
+                      if (v3 instanceof Data_Ordering.LT) {
+                          $copy_v = v.value0;
+                          return;
+                      };
+                      if (v4 instanceof Data_Ordering.GT) {
+                          $copy_v = v.value6;
+                          return;
+                      };
+                      $copy_v = v.value3;
+                      return;
+                  };
+                  throw new Error("Failed pattern match at Data.Map line 162, column 5 - line 162, column 22: " + [ v.constructor.name ]);
+              };
+              while (!$tco_done) {
+                  $tco_result = $tco_loop($copy_v);
+              };
+              return $tco_result;
+          };
+          return go;
+      };
   }; 
   var fromZipper = function ($copy_dictOrd) {
       return function ($copy_v) {
@@ -30866,6 +30922,7 @@ var PS = {};
   var empty = Leaf.value;
   exports["empty"] = empty;
   exports["insert"] = insert;
+  exports["lookup"] = lookup;
   exports["singleton"] = singleton;
   exports["size"] = size;
   exports["toAscUnfoldable"] = toAscUnfoldable;
@@ -32012,6 +32069,9 @@ var PS = {};
   var Prelude = PS["Prelude"];
   var Types_Exchange = PS["Types.Exchange"];
   var uuidDecodeError = new Data_Foreign.ForeignError("Decode UUID error");
+  var unwrap = function (v) {
+      return v;
+  }; 
   var decodeUUID = new Data_Foreign_Class.Decode(function (uuidForeign) {
       return Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Data_Identity.monadIdentity))(Data_Foreign_Class.decode(Data_Foreign_Class.stringDecode)(uuidForeign))(function (v) {
           var v1 = Data_UUID.parseUUID(v);
@@ -32024,6 +32084,7 @@ var PS = {};
           throw new Error("Failed pattern match at Types.UUIDWrapped line 34, column 5 - line 36, column 56: " + [ v1.constructor.name ]);
       });
   });
+  exports["unwrap"] = unwrap;
   exports["uuidDecodeError"] = uuidDecodeError;
   exports["decodeUUID"] = decodeUUID;
 })(PS["Types.UUIDWrapped"] = PS["Types.UUIDWrapped"] || {});
@@ -32206,17 +32267,31 @@ var PS = {};
   var Types_UUIDWrapped = PS["Types.UUIDWrapped"];
   var Unsafe_Coerce = PS["Unsafe.Coerce"];        
   var stockList = (function () {
-      var stockRender = function (v) {
-          return React_DOM["p'"]([ React_DOM.text(v.symbol), React_DOM.text(": "), React_DOM.text(v.description) ]);
+      var stockRender = function (stockListState) {
+          return function (v) {
+              var mTimestamp = Data_Map.lookup(Data_UUID.ordUUID)(Types_UUIDWrapped.unwrap(v.stockId))(stockListState.mostRecentTicks);
+              var recent = (function () {
+                  if (mTimestamp instanceof Data_Maybe.Just) {
+                      return [ React_DOM.text(" | most recent timestamp: "), React_DOM.text(mTimestamp.value0) ];
+                  };
+                  if (mTimestamp instanceof Data_Maybe.Nothing) {
+                      return [  ];
+                  };
+                  throw new Error("Failed pattern match at StockList line 67, column 16 - line 71, column 22: " + [ mTimestamp.constructor.name ]);
+              })();
+              return React_DOM["p'"](Data_Semigroup.append(Data_Semigroup.semigroupArray)([ React_DOM.text(v.symbol), React_DOM.text(": "), React_DOM.text(v.description) ])(recent));
+          };
       };
-      var stockReactElements = function (stockList1) {
-          return Data_Functor.map(Data_Functor.functorArray)(stockRender)(stockList1);
+      var stockReactElements = function (stockListState) {
+          return function (stockList1) {
+              return Data_Functor.map(Data_Functor.functorArray)(stockRender(stockListState))(stockList1);
+          };
       };
       var render = function (v) {
           return function (v1) {
               return function (stockListState) {
                   return function (v2) {
-                      return Data_Semigroup.append(Data_Semigroup.semigroupArray)([ React_DOM["h1'"]([ React_DOM.text("Stock List") ]), React_DOM["p'"]([ React_DOM.text("Number of stocks: "), React_DOM.text(Data_Show.show(Data_Show.showInt)(Data_Array.length(stockListState.stocks))) ]) ])(stockReactElements(stockListState.stocks));
+                      return Data_Semigroup.append(Data_Semigroup.semigroupArray)([ React_DOM["h1'"]([ React_DOM.text("Stock List") ]), React_DOM["p'"]([ React_DOM.text("Number of stocks: "), React_DOM.text(Data_Show.show(Data_Show.showInt)(Data_Array.length(stockListState.stocks))) ]) ])(stockReactElements(stockListState)(stockListState.stocks));
                   };
               };
           };
@@ -32283,7 +32358,7 @@ var PS = {};
                       return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("number of most recent ticks: " + Data_Show.show(Data_Show.showInt)(Data_Map.size(v2)))))(function (v4) {
                           var initial = {
                               stocks: v, 
-                              mostRecentTicks: Data_Map.empty
+                              mostRecentTicks: v2
                           };
                           return Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Thermite.defaultMain(StockList.stockList)(initial)(Data_Unit.unit));
                       });

@@ -38,8 +38,8 @@ import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 import Types.Stock
 import Types.Exchange
 
-import Types.UUIDWrapped
-import Types.DateTimeWrapped
+import Types.UUIDWrapped as UW
+import Types.DateTimeWrapped as DW
 import Types.MostRecentTick
 
 
@@ -56,16 +56,30 @@ stockList :: T.Spec _ StockListState _ _
 stockList = T.simpleSpec T.defaultPerformAction render
   where
 
-    stockRender :: Stock -> R.ReactElement
-    stockRender (Stock stock) =
-      R.p' [ R.text stock.symbol
-           , R.text ": "
-           , R.text stock.description
-           ]
+    stockRender :: StockListState
+                -> Stock
+                -> R.ReactElement
+    stockRender stockListState (Stock stock) = let
+      mTimestamp :: Maybe String
+      mTimestamp = Map.lookup (UW.unwrap stock.stockId) stockListState.mostRecentTicks
 
-    stockReactElements :: Array Stock -> Array R.ReactElement
-    stockReactElements stockList =
-      stockRender <$> stockList
+      recent :: Array R.ReactElement
+      recent = case mTimestamp of
+        (Just timestamp) -> [ R.text " | most recent timestamp: "
+                            , R.text timestamp
+                            ]
+        Nothing -> []
+
+      in R.p' ([ R.text stock.symbol
+               , R.text ": "
+               , R.text stock.description
+               ] <> recent)
+
+    stockReactElements :: StockListState
+                       -> Array Stock
+                       -> Array R.ReactElement
+    stockReactElements stockListState stockList =
+      (stockRender stockListState) <$> stockList
     
     render :: T.Render StockListState _ _
     render _ _ stockListState _ =
@@ -73,7 +87,7 @@ stockList = T.simpleSpec T.defaultPerformAction render
       , R.p' [ R.text "Number of stocks: "
              , R.text (show (length stockListState.stocks))
              ]
-      ] <> stockReactElements (stockListState.stocks)
+      ] <> stockReactElements stockListState (stockListState.stocks)
 
 
 getStocks :: forall e. Aff (ajax :: AJAX | e) (Array Stock)

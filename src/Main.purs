@@ -54,7 +54,7 @@ main = do
     let
       initial :: StockListState
       initial = { stocks: stocks
-                , mostRecentTicks: empty
+                , mostRecentTicks: mrts
                 }
 
     liftEff $ T.defaultMain stockList initial unit
