@@ -15,7 +15,7 @@ import Data.List.Types
 import Data.Foreign
 import Data.Foreign.JSON
 import Data.Foreign.Generic
-import Data.StrMap
+import Data.Map
 import Data.UUID
 
 import Control.Monad.Aff

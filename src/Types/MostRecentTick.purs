@@ -20,6 +20,7 @@ import Data.Maybe
 import Data.Ord
 import Data.Show
 import Data.UUID
+import Data.Tuple
 import Data.List.Types
 import Data.Identity
 import Prelude
@@ -27,33 +28,48 @@ import Data.DateTime
 import Data.Date
 import Data.Time
 import Data.JSDate
---import Data.Map
+import Data.Map as Map
+import Data.StrMap as StrMap
 
-import Data.StrMap
+import Data.Traversable
+import Data.Foldable as Foldable
 
 import Types.UUIDWrapped
 import Types.DateTimeWrapped
+
 
 -- newtype Map' k v = Map' (Map k v)
 
 -- instance decodeMap :: Decode (Map' Foreign Foreign) where
 --   decode foreignKV = decode foreignKV :: ExceptT (NonEmptyList ForeignError) Identity (Map' Foreign Foreign)
     
+mapFold :: (Map.Map UUID String) -> (Tuple String String) -> (Map.Map UUID String)
+mapFold mp (Tuple sk v) =
+  case (parseUUID sk) of
+    (Just k) -> Map.insert k v mp
+    Nothing -> mp
 
---getMostRecentTicks :: forall e. Aff (ajax :: AJAX | e) (Map' UUID' DateTime')
+-- filters out UUIDs that fail to parse
+strMapToMap :: StrMap.StrMap String -> Map.Map UUID String
+strMapToMap strMap = let
+  tups :: Array (Tuple String String)
+  tups = (StrMap.toUnfoldable strMap) 
+  in Foldable.foldl mapFold Map.empty tups
 
---getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (StrMap DateTime')
-getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (StrMap String)
+getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (Map.Map UUID String)
 getMostRecentTicks = do
   res <- get "http://localhost:1234/latestTickerTimestamps"
   let
     --eParsed :: Either (NonEmptyList ForeignError) (StrMap DateTime')
-    eParsed :: Either (NonEmptyList ForeignError) (StrMap String)
+    eParsed :: Either (NonEmptyList ForeignError) (StrMap.StrMap String)
     eParsed = runExcept (decodeJSON res.response)
 
-  liftEff $ log $ either (\nel -> show nel) (\strmap -> show strmap) eParsed
+    eMapUUID :: Either (NonEmptyList ForeignError) (Map.Map UUID String)
+    eMapUUID = strMapToMap <$> eParsed
+
+  liftEff $ log $ either (\nel -> show nel) (\strmap -> show strmap) eMapUUID
   let
-    arrMRT = either (\_ -> empty) id eParsed
+    arrMRT = either (\_ -> Map.empty) id eMapUUID
   pure arrMRT
 
 

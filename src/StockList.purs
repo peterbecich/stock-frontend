@@ -7,7 +7,6 @@ import Control.Monad.Aff
 import Control.Monad.Eff
 import Control.Monad.Eff.Class
 import Data.Maybe
---import Data.List
 import Data.Array
 import Data.Tuple
 import Data.Either
@@ -23,7 +22,10 @@ import React.DOM as R
 import React.DOM.Props as RP
 import Thermite as T
 import Unsafe.Coerce (unsafeCoerce)
-import Data.StrMap
+
+import Data.StrMap as StrMap
+import Data.Map as Map
+
 import Data.UUID
 import Data.List.Types
 import Data.Foreign
@@ -40,14 +42,14 @@ import Types.UUIDWrapped
 import Types.DateTimeWrapped
 import Types.MostRecentTick
 
+
 type StockListState = { stocks :: Array Stock
-                      --, mostRecentTicks :: StrMap DateTime'
-                        , mostRecentTicks :: StrMap String
+                      , mostRecentTicks :: Map.Map UUID String
                       }
 
 initialStockListState :: StockListState
 initialStockListState = { stocks: []
-                        , mostRecentTicks: empty
+                        , mostRecentTicks: Map.empty
                         }
 
 stockList :: T.Spec _ StockListState _ _
