@@ -1,6 +1,12 @@
 module Types.MostRecentTick where
 
 import Control.Monad.Except
+import Control.Monad.Aff
+import Control.Monad.Eff
+
+import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Eff.Class
 
 import Data.Array
 import Data.Either
@@ -21,45 +27,33 @@ import Data.DateTime
 import Data.Date
 import Data.Time
 import Data.JSDate
+--import Data.Map
+
+import Data.StrMap
 
 import Types.UUIDWrapped
+import Types.DateTimeWrapped
 
-newtype MostRecentTick = MostRecentTick
-                         { stockId :: UUID'
-                         , timestamp :: DateTime
-                         }
+-- newtype Map' k v = Map' (Map k v)
 
-derive instance genericMostRecentTick :: Generic MostRecentTick _
+-- instance decodeMap :: Decode (Map' Foreign Foreign) where
+--   decode foreignKV = decode foreignKV :: ExceptT (NonEmptyList ForeignError) Identity (Map' Foreign Foreign)
+    
 
-instance showMostRecentTick :: Show MostRecentTick where
-  show (MostRecentTick mrt) =
-    (show (unwrap mrt.stockId)) <> ": " <> (show mrt.timestamp)
+--getMostRecentTicks :: forall e. Aff (ajax :: AJAX | e) (Map' UUID' DateTime')
 
-newtype MostRecentTickIntermediate = MostRecentTickIntermediate
-                         { stockId :: UUID'
-                         , timestampForeign :: Foreign
-                         }
+--getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (StrMap DateTime')
+getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (StrMap String)
+getMostRecentTicks = do
+  res <- get "http://localhost:1234/latestTickerTimestamps"
+  let
+    --eParsed :: Either (NonEmptyList ForeignError) (StrMap DateTime')
+    eParsed :: Either (NonEmptyList ForeignError) (StrMap String)
+    eParsed = runExcept (decodeJSON res.response)
 
-derive instance genericMostRecentTickIntermediate :: Generic MostRecentTickIntermediate _
+  liftEff $ log $ either (\nel -> show nel) (\strmap -> show strmap) eParsed
+  let
+    arrMRT = either (\_ -> empty) id eParsed
+  pure arrMRT
 
-instance decodeMostRecentTickIntermediate :: Decode MostRecentTickIntermediate where
-  decode = genericDecode (
-    defaultOptions {
-       unwrapSingleConstructors = true
-       }
-    )
 
-datetimeDecodeError = ForeignError "Decode DateTime error"
-
-instance decodeMostRecentTick :: Decode MostRecentTick where
-  decode foreignMRT = do
-    (MostRecentTickIntermediate intermediate) <- decode foreignMRT :: ExceptT (NonEmptyList ForeignError) Identity MostRecentTickIntermediate
-    jsdate <- readDate intermediate.timestampForeign :: ExceptT (NonEmptyList ForeignError) Identity JSDate
-    let
-      sid :: UUID'
-      sid = intermediate.stockId
-      mdatetime :: Maybe DateTime
-      mdatetime = toDateTime jsdate
-    case mdatetime of
-      (Just dt) -> pure $ MostRecentTick { stockId: sid, timestamp: dt }
-      Nothing -> except (Left (pure datetimeDecodeError))

@@ -1,46 +1,49 @@
 module Types.DateTimeWrapped where
 
+import Prelude
+
+import Control.Monad.Except
+import Data.Array
+import Data.Date
+import Data.DateTime
 import Data.Foreign
 import Data.Foreign.Class
 import Data.Foreign.Generic
-
-import Data.Array
-import Data.DateTime
-import Data.Date
-import Data.Time
+import Data.JSDate
 import Data.List.Types
+import Data.Time
+import Data.Maybe
+import Data.Show
+import Data.Either
+
+import Data.Identity
 
 newtype DateTime' = DateTime' DateTime
 
 unwrap :: DateTime' -> DateTime
 unwrap (DateTime' dt) = dt
 
+instance showDateTime :: Show DateTime' where
+  show (DateTime' dateTime) = show dateTime
+
 exampleTimestamp = "2017-11-17T20:26:00Z"
 
+datetimeDecodeError = ForeignError "Decode DateTime error"
+
+instance decodeDateTime :: Decode DateTime' where
+  decode dateTimeForeign = do
+    jsdate <- (readDate dateTimeForeign) :: ExceptT (NonEmptyList ForeignError) Identity JSDate
+    let
+      mDateTime :: Maybe DateTime
+      mDateTime = toDateTime jsdate
+    case mDateTime of
+      (Just dateTime) -> except (Right (DateTime' dateTime))
+      (Nothing) -> except (Left (pure datetimeDecodeError))
 
 
 newtype Date' = Date' Date
 
--- unwrap :: Date' -> Date
--- unwrap (Date' dt) = dt
+instance showDate :: Show Date' where
+  show (Date' date) = show date
 
--- instance decodeDate' :: Decode Date' where
---   decode dateForeign = do
---     dateString <- decode dateForeign :: ExceptT (NonEmptyList ForeignError) Identity String
---     let
---       yearString :: String
---       yearString = range 0 3 datxeString
-
---       monthString :: String
---       monthString = range 5 6 dateString
-
---       dayString :: String
---       dayString = rang 8 9 dateString
-
---     year <- decode (pure yearString) :: ExceptT (NonEmptyList ForeignError) Identity Int
---     month <- decode (pure monthString) :: ExceptT (NonEmptyList ForeignError) Identity Int
---     day <- decode (pure dayString) :: ExceptT (NonEmptyList ForeignError) Identity Int
-    
-
---     except (pure (Date' (canonicalDate 
 

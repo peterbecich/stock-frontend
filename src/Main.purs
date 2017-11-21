@@ -15,6 +15,8 @@ import Data.List.Types
 import Data.Foreign
 import Data.Foreign.JSON
 import Data.Foreign.Generic
+import Data.StrMap
+import Data.UUID
 
 import Control.Monad.Aff
 import Control.Monad.Except
@@ -26,49 +28,36 @@ import DOM (DOM)
 import Foo (initialFooState, fooSpec, FooState, FooAction)
 import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 import Thermite as T
+import Data.JSDate
+import Data.DateTime
 
+
+import Types.UUIDWrapped
+import Types.DateTimeWrapped
 import Types.MostRecentTick
+
 import Types.Stock
 import Types.Exchange
 import StockList
-
-
--- getStock = do
---   res <- get "http://localhost:1234/stock?stockId=172ec359-996d-4abb-a17d-7931b7b0624c"
---   let eParsed :: Either (NonEmptyList ForeignError) Stock
---       eParsed = runExcept (decodeJSON res.response)
---   liftEff $ log $ show eParsed
---   pure eParsed
-
-getStocks :: forall e. Aff (ajax :: AJAX | e) (Array Stock)
-getStocks = do
-  res <- get "http://localhost:1234/stocks"
-  let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
-      eParsed = runExcept (decodeJSON res.response)
-  -- TODO improve this!
-  let
-    arrStock = either (\_ -> []) id eParsed
-  pure arrStock
-
-getMostRecentTicks :: forall e. Aff (ajax :: AJAX | e) (Array MostRecentTick)
-getMostRecentTicks = do
-  res <- get "http://localhost:1234/latestTickerTimestamps"
-  let eParsed :: Either (NonEmptyList ForeignError) (Array MostRecentTick)
-      eParsed = runExcept (decodeJSON res.response)
-  -- TODO improve this!
-  let
-    arrMRT = either (\_ -> []) id eParsed
-  pure arrMRT
-
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
   log "Hello sailor!"
   _ <- launchAff $ do
     stocks <- getStocks
+    _ <- liftEff $ log $ "retrieved stocks: " <> show (length stocks)    
+
     mrts <- getMostRecentTicks
-    _ <- liftEff $ log $ "retrieved stocks: " <> show (length stocks)
-    liftEff $ T.defaultMain stockList initialStockListState unit
+    _ <- liftEff $ log $ show mrts
+    _ <- liftEff $ log $ "number of most recent ticks: " <> show (size mrts)
+
+    let
+      initial :: StockListState
+      initial = { stocks: stocks
+                , mostRecentTicks: empty
+                }
+
+    liftEff $ T.defaultMain stockList initial unit
     
   pure unit
   

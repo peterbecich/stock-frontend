@@ -14,7 +14,8 @@
     "purescript-aff": "^4.0.0",
     "purescript-react": "^4.4.0",
     "purescript-affjax": "v5.0.0",
-    "purescript-simple-json": "v1.0.0"
+    "purescript-simple-json": "v1.0.0",
+    "purescript-maps": "^3.5.2"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",

@@ -23,18 +23,31 @@ import React.DOM as R
 import React.DOM.Props as RP
 import Thermite as T
 import Unsafe.Coerce (unsafeCoerce)
+import Data.StrMap
+import Data.UUID
+import Data.List.Types
+import Data.Foreign
+import Control.Monad.Except
+import Data.Foreign.JSON
+import Data.Foreign.Generic
+
+import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 
 import Types.Stock
 import Types.Exchange
+
+import Types.UUIDWrapped
+import Types.DateTimeWrapped
 import Types.MostRecentTick
 
 type StockListState = { stocks :: Array Stock
-                      , mostRecentTicks :: Array MostRecentTick
+                      --, mostRecentTicks :: StrMap DateTime'
+                        , mostRecentTicks :: StrMap String
                       }
 
 initialStockListState :: StockListState
 initialStockListState = { stocks: []
-                        , mostRecentTicks: []
+                        , mostRecentTicks: empty
                         }
 
 stockList :: T.Spec _ StockListState _ _
@@ -60,4 +73,14 @@ stockList = T.simpleSpec T.defaultPerformAction render
              ]
       ] <> stockReactElements (stockListState.stocks)
 
+
+getStocks :: forall e. Aff (ajax :: AJAX | e) (Array Stock)
+getStocks = do
+  res <- get "http://localhost:1234/stocks"
+  let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
+      eParsed = runExcept (decodeJSON res.response)
+  -- TODO improve this!
+  let
+    arrStock = either (\_ -> []) id eParsed
+  pure arrStock
 
