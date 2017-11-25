@@ -1,4 +1,4 @@
-module Main where
+module MainDev where
 
 import Prelude
 
@@ -40,11 +40,11 @@ import Types.Stock
 import Types.Exchange
 import StockList
 
-host = "http://localhost:80"
+host = "http://localhost:8000"
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
-  log "Hello sailor!"
+  log "Compiled for developement"
   _ <- launchAff $ do
     stocks <- getStocks host
     _ <- liftEff $ log $ "retrieved stocks: " <> show (length stocks)    

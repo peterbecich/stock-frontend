@@ -6,8 +6,10 @@
     "test": "test"
   },
   "scripts": {
-    "build": "pulp build --to dist/Main.js",
-    "watch": "pulp -w build --to dist/Main.js"
+    "build_prod": "pulp build --main Main --to dist/Main.js",
+    "watch_prod": "pulp --watch build --main Main --to dist/Main.js",
+    "build_dev": "pulp build --main MainDev --to dist/Main.js",
+    "watch_dev": "pulp --watch build --main MainDev --to dist/Main.js"
   },
   "private": true,
   "author": "Peter Becich",

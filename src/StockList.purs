@@ -90,9 +90,9 @@ stockList = T.simpleSpec T.defaultPerformAction render
       ] <> stockReactElements stockListState (stockListState.stocks)
 
 
-getStocks :: forall e. Aff (ajax :: AJAX | e) (Array Stock)
-getStocks = do
-  res <- get "http://localhost:1234/stocks"
+getStocks :: forall e. String -> Aff (ajax :: AJAX | e) (Array Stock)
+getStocks host = do
+  res <- get $ host <> "/stocks"
   let eParsed :: Either (NonEmptyList ForeignError) (Array Stock)
       eParsed = runExcept (decodeJSON res.response)
   -- TODO improve this!

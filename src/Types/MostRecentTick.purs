@@ -56,9 +56,9 @@ strMapToMap strMap = let
   tups = (StrMap.toUnfoldable strMap) 
   in Foldable.foldl mapFold Map.empty tups
 
-getMostRecentTicks :: forall e. Aff (ajax :: AJAX, console :: CONSOLE | e) (Map.Map UUID String)
-getMostRecentTicks = do
-  res <- get "http://localhost:1234/latestTickerTimestamps"
+getMostRecentTicks :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Map.Map UUID String)
+getMostRecentTicks host = do
+  res <- get $ host <> "/latestTickerTimestamps"
   let
     --eParsed :: Either (NonEmptyList ForeignError) (StrMap DateTime')
     eParsed :: Either (NonEmptyList ForeignError) (StrMap.StrMap String)

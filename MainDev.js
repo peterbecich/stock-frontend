@@ -58441,9 +58441,9 @@ var Types_Exchange = require("../Types.Exchange");
 var Types_MostRecentTick = require("../Types.MostRecentTick");
 var Types_Stock = require("../Types.Stock");
 var Types_UUIDWrapped = require("../Types.UUIDWrapped");
-var host = "http://localhost:80";
+var host = "http://localhost:8000";
 var main = function __do() {
-    Control_Monad_Eff_Console.log("Hello sailor!")();
+    Control_Monad_Eff_Console.log("Compiled for developement")();
     var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(StockList.getStocks(host))(function (v) {
         return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("retrieved stocks: " + Data_Show.show(Data_Show.showInt)(Data_Array.length(v)))))(function (v1) {
             return Control_Bind.bind(Control_Monad_Aff.bindAff)(Types_MostRecentTick.getMostRecentTicks(host))(function (v2) {
@@ -62852,6 +62852,6 @@ module.exports = {
 };
 
 },{"./foreign":346}],348:[function(require,module,exports){
-require('Main').main();
+require('MainDev').main();
 
-},{"Main":310}]},{},[348]);
+},{"MainDev":310}]},{},[348]);
