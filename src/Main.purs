@@ -44,7 +44,7 @@ import StockList
 -- TODO replace with relative path?
 -- like here: https://github.com/slamdata/purescript-affjax#introduction
 --host = "http://51.15.206.218"
-host = "http://peterbecich.me"
+host = "http://www.peterbecich.me"
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
