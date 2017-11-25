@@ -40,7 +40,10 @@ import Types.Stock
 import Types.Exchange
 import StockList
 
-host = "http://localhost:80"
+-- host = "http://localhost:80"
+-- TODO replace with relative path?
+-- like here: https://github.com/slamdata/purescript-affjax#introduction
+host = "http://51.15.206.218"
 
 main :: forall e. Eff (ajax :: AJAX, console :: CONSOLE, dom :: DOM | e) Unit
 main = do
