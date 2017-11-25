@@ -32,6 +32,7 @@ import Data.Foreign
 import Control.Monad.Except
 import Data.Foreign.JSON
 import Data.Foreign.Generic
+import Data.DateTime
 
 import Network.HTTP.Affjax (get, post, AJAX, AffjaxResponse)
 
@@ -42,9 +43,8 @@ import Types.UUIDWrapped as UW
 import Types.DateTimeWrapped as DW
 import Types.MostRecentTick
 
-
 type StockListState = { stocks :: Array Stock
-                      , mostRecentTicks :: Map.Map UUID String
+                      , mostRecentTicks :: Map.Map UUID DateTime
                       }
 
 initialStockListState :: StockListState
@@ -60,13 +60,13 @@ stockList = T.simpleSpec T.defaultPerformAction render
                 -> Stock
                 -> R.ReactElement
     stockRender stockListState (Stock stock) = let
-      mTimestamp :: Maybe String
+      mTimestamp :: Maybe DateTime
       mTimestamp = Map.lookup (UW.unwrap stock.stockId) stockListState.mostRecentTicks
 
       recent :: Array R.ReactElement
       recent = case mTimestamp of
         (Just timestamp) -> [ R.text " | most recent timestamp: "
-                            , R.text timestamp
+                            , R.text (show timestamp)
                             ]
         Nothing -> []
 
