@@ -58447,7 +58447,7 @@ var main = function __do() {
     var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(StockList.getStocks(host))(function (v) {
         return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("retrieved stocks: " + Data_Show.show(Data_Show.showInt)(Data_Array.length(v)))))(function (v1) {
             return Control_Bind.bind(Control_Monad_Aff.bindAff)(Types_MostRecentTick.getMostRecentTicks(host))(function (v2) {
-                return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Map.showMap(Data_UUID.showUUID)(Data_DateTime.showDateTime))(v2))))(function (v3) {
+                return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Map.showMap(Data_UUID.showUUID)(Data_Show.showString))(v2))))(function (v3) {
                     return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log("number of most recent ticks: " + Data_Show.show(Data_Show.showInt)(Data_Map.size(v2)))))(function (v4) {
                         var initial = {
                             stocks: v, 
@@ -61321,7 +61321,7 @@ var stockList = (function () {
             var mTimestamp = Data_Map.lookup(Data_UUID.ordUUID)(Types_UUIDWrapped.unwrap(v.stockId))(stockListState.mostRecentTicks);
             var recent = (function () {
                 if (mTimestamp instanceof Data_Maybe.Just) {
-                    return [ React_DOM.text(" | most recent timestamp: "), React_DOM.text(Data_Show.show(Data_DateTime.showDateTime)(mTimestamp.value0)) ];
+                    return [ React_DOM.text(" | most recent timestamp: "), React_DOM.text(Data_Show.show(Data_Show.showString)(mTimestamp.value0)) ];
                 };
                 if (mTimestamp instanceof Data_Maybe.Nothing) {
                     return [  ];
@@ -62491,7 +62491,6 @@ module.exports = {
 },{"../Type.Data.Boolean":335,"../Type.Data.Symbol":337,"../Type.Equality":338}],341:[function(require,module,exports){
 "use strict";
 var Control_Applicative = require("../Control.Applicative");
-var Control_Bind = require("../Control.Bind");
 var Control_Monad_Except = require("../Control.Monad.Except");
 var Control_Monad_Except_Trans = require("../Control.Monad.Except.Trans");
 var Data_Array = require("../Data.Array");
@@ -62501,16 +62500,46 @@ var Data_Either = require("../Data.Either");
 var Data_Foreign = require("../Data.Foreign");
 var Data_Foreign_Class = require("../Data.Foreign.Class");
 var Data_Foreign_Generic = require("../Data.Foreign.Generic");
+var Data_Functor = require("../Data.Functor");
 var Data_Identity = require("../Data.Identity");
 var Data_JSDate = require("../Data.JSDate");
 var Data_List_Types = require("../Data.List.Types");
 var Data_Maybe = require("../Data.Maybe");
 var Data_Show = require("../Data.Show");
+var Data_String = require("../Data.String");
 var Data_Time = require("../Data.Time");
 var Prelude = require("../Prelude");
 var DateTime$prime = function (x) {
     return x;
 };
+
+//   datetimeString <- readString dateTimeForeign :: ExceptT (NonEmptyList ForeignError) Identity String
+
+//   let
+
+//     maybeSplit :: Maybe { before :: String, after :: String }
+
+//     maybeSplit = splitAt 10 datetimeString
+
+// case maybeSplit of
+
+//   Nothing -> except (Left (pure datetimeDecodeError))
+
+//   (Just splitDateTimeStr ) -> do
+
+//     jsdate <- (readDate splitDateTimeStr.before) :: ExceptT (NonEmptyList ForeignError) Identity JSDate
+
+// let
+
+//   mDateTime :: Maybe DateTime
+
+//   mDateTime = toDateTime jsdate
+
+// case mDateTime of
+
+//   (Just dateTime) -> except (Right (DateTime' dateTime))
+
+//   (Nothing) -> except (Left (pure datetimeDecodeError))
 var Date$prime = function (x) {
     return x;
 };
@@ -62524,23 +62553,50 @@ var showDate = new Data_Show.Show(function (v) {
     return Data_Show.show(Data_Date.showDate)(v);
 });
 var exampleTimestamp = "2017-11-17T20:26:00Z";
+var example2 = {
+    year: 1000.0, 
+    month: 1.0, 
+    day: 1.0, 
+    hour: 1.0, 
+    minute: 1.0, 
+    second: 1.0, 
+    millisecond: 1.0
+};
+var exampleJSDate = Data_JSDate.jsdate(example2);
+var exampleForeign2 = Data_Foreign.toForeign(exampleJSDate);
+var example3 = Data_Foreign.unsafeFromForeign(exampleForeign2);
+var exampleParsed2 = Data_JSDate.readDate(exampleForeign2);
+var exampleParsed3 = Data_Functor.map(Control_Monad_Except_Trans.functorExceptT(Data_Identity.functorIdentity))(Data_JSDate.toDateTime)(exampleParsed2);
+var example3Either = Control_Monad_Except.runExcept(exampleParsed3);
+
+// example :: String
+
+// example = "2017-11-24T17:59:00"
+var example = "2017-11-24";
+var exampleForeign = Data_Foreign.toForeign(example);
+var exampleParsed = Data_JSDate.readDate(exampleForeign);
+var example2Parsed = Data_Functor.map(Control_Monad_Except_Trans.functorExceptT(Data_Identity.functorIdentity))(Data_JSDate.toDateTime)(exampleParsed);
+var example2Either = Control_Monad_Except.runExcept(example2Parsed);
 var datetimeDecodeError = new Data_Foreign.ForeignError("Decode DateTime error");
 var decodeDateTime = new Data_Foreign_Class.Decode(function (dateTimeForeign) {
-    return Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Data_Identity.monadIdentity))(Data_JSDate.readDate(dateTimeForeign))(function (v) {
-        var mDateTime = Data_JSDate.toDateTime(v);
-        if (mDateTime instanceof Data_Maybe.Just) {
-            return Control_Monad_Except_Trans.except(Data_Identity.applicativeIdentity)(new Data_Either.Right(mDateTime.value0));
-        };
-        if (mDateTime instanceof Data_Maybe.Nothing) {
-            return Control_Monad_Except_Trans.except(Data_Identity.applicativeIdentity)(new Data_Either.Left(Control_Applicative.pure(Data_List_Types.applicativeNonEmptyList)(datetimeDecodeError)));
-        };
-        throw new Error("Failed pattern match at Types.DateTimeWrapped line 39, column 5 - line 41, column 60: " + [ mDateTime.constructor.name ]);
-    });
+    return Control_Monad_Except_Trans.except(Data_Identity.applicativeIdentity)(new Data_Either.Left(Control_Applicative.pure(Data_List_Types.applicativeNonEmptyList)(datetimeDecodeError)));
 });
 module.exports = {
     "Date'": Date$prime, 
     "DateTime'": DateTime$prime, 
     datetimeDecodeError: datetimeDecodeError, 
+    example: example, 
+    example2: example2, 
+    example2Either: example2Either, 
+    example2Parsed: example2Parsed, 
+    example3: example3, 
+    example3Either: example3Either, 
+    exampleForeign: exampleForeign, 
+    exampleForeign2: exampleForeign2, 
+    exampleJSDate: exampleJSDate, 
+    exampleParsed: exampleParsed, 
+    exampleParsed2: exampleParsed2, 
+    exampleParsed3: exampleParsed3, 
     exampleTimestamp: exampleTimestamp, 
     unwrap: unwrap, 
     showDateTime: showDateTime, 
@@ -62548,11 +62604,11 @@ module.exports = {
     showDate: showDate
 };
 
-},{"../Control.Applicative":44,"../Control.Bind":50,"../Control.Monad.Except":77,"../Control.Monad.Except.Trans":76,"../Data.Array":124,"../Data.Date":144,"../Data.DateTime":148,"../Data.Either":151,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Identity":193,"../Data.JSDate":199,"../Data.List.Types":232,"../Data.Maybe":237,"../Data.Show":279,"../Data.Time":291,"../Prelude":324}],342:[function(require,module,exports){
-// Generated by purs version 0.11.6
+},{"../Control.Applicative":44,"../Control.Monad.Except":77,"../Control.Monad.Except.Trans":76,"../Data.Array":124,"../Data.Date":144,"../Data.DateTime":148,"../Data.Either":151,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Functor":184,"../Data.Identity":193,"../Data.JSDate":199,"../Data.List.Types":232,"../Data.Maybe":237,"../Data.Show":279,"../Data.String":287,"../Data.Time":291,"../Prelude":324}],342:[function(require,module,exports){
 "use strict";
 var Data_Array = require("../Data.Array");
 var Data_Eq = require("../Data.Eq");
+var Data_Foreign = require("../Data.Foreign");
 var Data_Foreign_Class = require("../Data.Foreign.Class");
 var Data_Foreign_Generic = require("../Data.Foreign.Generic");
 var Data_Foreign_Generic_Class = require("../Data.Foreign.Generic.Class");
@@ -62585,6 +62641,8 @@ var eqExchange = new Data_Eq.Eq(function (x) {
         return x.name === y.name && x.timeZone === y.timeZone;
     };
 });
+
+// https://leanpub.com/purescript/read#leanpub-auto-record-patterns-and-row-polymorphism
 var ordExchange = new Data_Ord.Ord(function () {
     return eqExchange;
 }, function (v) {
@@ -62617,7 +62675,7 @@ module.exports = {
     decodeExchange: decodeExchange
 };
 
-},{"../Data.Array":124,"../Data.Eq":154,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Foreign.Generic.Class":163,"../Data.Generic.Rep":187,"../Data.HeytingAlgebra":192,"../Data.List":233,"../Data.Maybe":237,"../Data.Ord":255,"../Data.Semigroup":275,"../Data.Show":279,"../Data.Symbol":288,"../Data.UUID":299,"../Prelude":324}],343:[function(require,module,exports){
+},{"../Data.Array":124,"../Data.Eq":154,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Foreign.Generic.Class":163,"../Data.Generic.Rep":187,"../Data.HeytingAlgebra":192,"../Data.List":233,"../Data.Maybe":237,"../Data.Ord":255,"../Data.Semigroup":275,"../Data.Show":279,"../Data.Symbol":288,"../Data.UUID":299,"../Prelude":324}],343:[function(require,module,exports){
 "use strict";
 var Control_Applicative = require("../Control.Applicative");
 var Control_Bind = require("../Control.Bind");
@@ -62638,7 +62696,6 @@ var Data_Foreign = require("../Data.Foreign");
 var Data_Foreign_Class = require("../Data.Foreign.Class");
 var Data_Foreign_Generic = require("../Data.Foreign.Generic");
 var Data_Function = require("../Data.Function");
-var Data_Functor = require("../Data.Functor");
 var Data_Generic_Rep = require("../Data.Generic.Rep");
 var Data_Identity = require("../Data.Identity");
 var Data_JSDate = require("../Data.JSDate");
@@ -62688,16 +62745,16 @@ var strMapToMap = function (strMap) {
 // https://pursuit.purescript.org/packages/purescript-foreign-generic/4.3.0/docs/Data.Foreign.Generic#v:decodeJSON
 var getMostRecentTicks = function (host) {
     return Control_Bind.bind(Control_Monad_Aff.bindAff)(Network_HTTP_Affjax.get(Network_HTTP_Affjax_Response.responsableString)(host + "/latestTickerTimestamps"))(function (v) {
-        return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Data_Identity.monadIdentity))(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.strMapDecode(Types_DateTimeWrapped.decodeDateTime))(v.response))(function (v1) {
+        return Control_Bind.bind(Control_Monad_Aff.bindAff)(Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(Control_Monad_Except.runExcept(Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Data_Identity.monadIdentity))(Data_Foreign_Generic.decodeJSON(Data_Foreign_Class.strMapDecode(Data_Foreign_Class.stringDecode))(v.response))(function (v1) {
             var mapUUIDDateTime$prime = strMapToMap(v1);
-            var mapUUIDDateTime = Data_Functor.map(Data_Map.functorMap)(Types_DateTimeWrapped.unwrap)(mapUUIDDateTime$prime);
-            return Control_Applicative.pure(Control_Monad_Except_Trans.applicativeExceptT(Data_Identity.monadIdentity))(mapUUIDDateTime);
-        })))(function (v1) {
-            var eitherMap = Control_Monad_Except.runExcept(v1);
-            var m = Data_Either.either(function (v2) {
-                return Data_Map.empty;
-            })(Control_Category.id(Control_Category.categoryFn))(eitherMap);
-            return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(m);
+            return Control_Applicative.pure(Control_Monad_Except_Trans.applicativeExceptT(Data_Identity.monadIdentity))(mapUUIDDateTime$prime);
+        }))))(function (v1) {
+            return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Either.showEither(Data_List_Types.showNonEmptyList(Data_Foreign.showForeignError))(Data_Map.showMap(Data_UUID.showUUID)(Data_Show.showString)))(v1))))(function () {
+                var m = Data_Either.either(function (v2) {
+                    return Data_Map.empty;
+                })(Control_Category.id(Control_Category.categoryFn))(v1);
+                return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(m);
+            });
         });
     });
 };
@@ -62707,7 +62764,7 @@ module.exports = {
     strMapToMap: strMapToMap
 };
 
-},{"../Control.Applicative":44,"../Control.Bind":50,"../Control.Category":51,"../Control.Monad.Aff":59,"../Control.Monad.Eff":74,"../Control.Monad.Eff.Class":62,"../Control.Monad.Eff.Console":64,"../Control.Monad.Except":77,"../Control.Monad.Except.Trans":76,"../Data.Array":124,"../Data.Date":144,"../Data.DateTime":148,"../Data.Either":151,"../Data.Eq":154,"../Data.Foldable":160,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Function":178,"../Data.Functor":184,"../Data.Generic.Rep":187,"../Data.Identity":193,"../Data.JSDate":199,"../Data.List":233,"../Data.List.Types":232,"../Data.Map":234,"../Data.Maybe":237,"../Data.Ord":255,"../Data.Semigroup":275,"../Data.Show":279,"../Data.StrMap":283,"../Data.Time":291,"../Data.Traversable":295,"../Data.Tuple":297,"../Data.UUID":299,"../Data.Unfoldable":301,"../Network.HTTP.Affjax":316,"../Network.HTTP.Affjax.Response":314,"../Prelude":324,"../Types.DateTimeWrapped":341,"../Types.UUIDWrapped":345}],344:[function(require,module,exports){
+},{"../Control.Applicative":44,"../Control.Bind":50,"../Control.Category":51,"../Control.Monad.Aff":59,"../Control.Monad.Eff":74,"../Control.Monad.Eff.Class":62,"../Control.Monad.Eff.Console":64,"../Control.Monad.Except":77,"../Control.Monad.Except.Trans":76,"../Data.Array":124,"../Data.Date":144,"../Data.DateTime":148,"../Data.Either":151,"../Data.Eq":154,"../Data.Foldable":160,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Function":178,"../Data.Generic.Rep":187,"../Data.Identity":193,"../Data.JSDate":199,"../Data.List":233,"../Data.List.Types":232,"../Data.Map":234,"../Data.Maybe":237,"../Data.Ord":255,"../Data.Semigroup":275,"../Data.Show":279,"../Data.StrMap":283,"../Data.Time":291,"../Data.Traversable":295,"../Data.Tuple":297,"../Data.UUID":299,"../Data.Unfoldable":301,"../Network.HTTP.Affjax":316,"../Network.HTTP.Affjax.Response":314,"../Prelude":324,"../Types.DateTimeWrapped":341,"../Types.UUIDWrapped":345}],344:[function(require,module,exports){
 // Generated by purs version 0.11.6
 "use strict";
 var Control_Monad_Except = require("../Control.Monad.Except");
@@ -62782,6 +62839,7 @@ module.exports = {
 };
 
 },{"../Control.Monad.Except":77,"../Data.Array":124,"../Data.Either":151,"../Data.Eq":154,"../Data.Foreign":174,"../Data.Foreign.Class":162,"../Data.Foreign.Generic":165,"../Data.Foreign.Generic.Class":163,"../Data.Generic.Rep":187,"../Data.HeytingAlgebra":192,"../Data.Identity":193,"../Data.List":233,"../Data.List.Types":232,"../Data.Maybe":237,"../Data.Ord":255,"../Data.Semigroup":275,"../Data.Show":279,"../Data.Symbol":288,"../Data.UUID":299,"../Prelude":324,"../Types.Exchange":342,"../Types.UUIDWrapped":345}],345:[function(require,module,exports){
+// Generated by purs version 0.11.6
 "use strict";
 var Control_Applicative = require("../Control.Applicative");
 var Control_Bind = require("../Control.Bind");
@@ -62815,8 +62873,6 @@ var eqUUID = new Data_Eq.Eq(function (v) {
         return Data_Eq.eq(Data_UUID.eqUUID)(v)(v1);
     };
 });
-
-// F = Except Multipleerrors
 var decodeUUID = new Data_Foreign_Class.Decode(function (uuidForeign) {
     return Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Data_Identity.monadIdentity))(Data_Foreign_Class.decode(Data_Foreign_Class.stringDecode)(uuidForeign))(function (v) {
         var v1 = Data_UUID.parseUUID(v);

@@ -2,6 +2,7 @@ module Types.Exchange where
 
 import Data.Array
 import Data.Eq
+import Data.Foreign
 import Data.Foreign.Class
 import Data.Foreign.Generic
 import Data.Generic.Rep

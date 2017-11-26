@@ -55,32 +55,23 @@ strMapToMap strMap = let
   in Foldable.foldl mapFold Map.empty tups
 
 -- https://pursuit.purescript.org/packages/purescript-foreign-generic/4.3.0/docs/Data.Foreign.Generic#v:decodeJSON
-getMostRecentTicks :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Map.Map UUID DateTime)
+getMostRecentTicks :: forall e. String -> Aff (ajax :: AJAX, console :: CONSOLE | e) (Map.Map UUID String)
 getMostRecentTicks host = do
   res <- get  (host <> "/latestTickerTimestamps") :: Affjax (console :: CONSOLE | e) (String)
 
   -- enter the except monad
-  exceptMap <- pure $ do
-    strMapDateTime <- decodeJSON res.response :: Except (NonEmptyList ForeignError) (StrMap.StrMap DateTime')
-
+  eitherMap <- pure $ runExcept $ do
+    strMap <- decodeJSON res.response :: Except (NonEmptyList ForeignError) (StrMap.StrMap String)
     let 
-      mapUUIDDateTime' :: Map.Map UUID DateTime'
-      mapUUIDDateTime' = strMapToMap strMapDateTime
-
-      mapUUIDDateTime :: Map.Map UUID DateTime
-      mapUUIDDateTime = DT.unwrap <$> mapUUIDDateTime'
-
-    pure mapUUIDDateTime
-
-  let
-    eitherMap :: Either (NonEmptyList ForeignError) (Map.Map UUID DateTime)
-    eitherMap = runExcept exceptMap
-
-    m :: Map.Map UUID DateTime
-    m = either (\_ -> Map.empty) id eitherMap
+      mapUUIDDateTime' :: Map.Map UUID String
+      mapUUIDDateTime' = strMapToMap strMap
+    pure mapUUIDDateTime'
 
   liftEff $ log $ show eitherMap
 
+  let
+    m :: Map.Map UUID String
+    m = either (\_ -> Map.empty) id eitherMap
   pure m
 
 

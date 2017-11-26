@@ -44,7 +44,7 @@ import Types.DateTimeWrapped as DW
 import Types.MostRecentTick
 
 type StockListState = { stocks :: Array Stock
-                      , mostRecentTicks :: Map.Map UUID DateTime
+                      , mostRecentTicks :: Map.Map UUID String
                       }
 
 initialStockListState :: StockListState
@@ -60,7 +60,7 @@ stockList = T.simpleSpec T.defaultPerformAction render
                 -> Stock
                 -> R.ReactElement
     stockRender stockListState (Stock stock) = let
-      mTimestamp :: Maybe DateTime
+      mTimestamp :: Maybe String
       mTimestamp = Map.lookup (UW.unwrap stock.stockId) stockListState.mostRecentTicks
 
       recent :: Array R.ReactElement
