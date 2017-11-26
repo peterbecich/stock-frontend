@@ -58441,7 +58441,7 @@ var Types_Exchange = require("../Types.Exchange");
 var Types_MostRecentTick = require("../Types.MostRecentTick");
 var Types_Stock = require("../Types.Stock");
 var Types_UUIDWrapped = require("../Types.UUIDWrapped");
-var host = "http://peterbecich.me";
+var host = "http://www.peterbecich.me";
 var main = function __do() {
     Control_Monad_Eff_Console.log("Hello sailor!")();
     var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(StockList.getStocks(host))(function (v) {
