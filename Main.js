@@ -58441,7 +58441,7 @@ var Types_Exchange = require("../Types.Exchange");
 var Types_MostRecentTick = require("../Types.MostRecentTick");
 var Types_Stock = require("../Types.Stock");
 var Types_UUIDWrapped = require("../Types.UUIDWrapped");
-var host = "http://www.peterbecich.me";
+var host = "";
 var main = function __do() {
     Control_Monad_Eff_Console.log("Hello sailor!")();
     var v = Control_Monad_Aff.launchAff(Control_Bind.bind(Control_Monad_Aff.bindAff)(StockList.getStocks(host))(function (v) {
@@ -62697,7 +62697,9 @@ var getMostRecentTicks = function (host) {
             var m = Data_Either.either(function (v2) {
                 return Data_Map.empty;
             })(Control_Category.id(Control_Category.categoryFn))(eitherMap);
-            return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(m);
+            return Control_Bind.discard(Control_Bind.discardUnit)(Control_Monad_Aff.bindAff)(Control_Monad_Eff_Class.liftEff(Control_Monad_Aff.monadEffAff)(Control_Monad_Eff_Console.log(Data_Show.show(Data_Either.showEither(Data_List_Types.showNonEmptyList(Data_Foreign.showForeignError))(Data_Map.showMap(Data_UUID.showUUID)(Data_DateTime.showDateTime)))(eitherMap))))(function () {
+                return Control_Applicative.pure(Control_Monad_Aff.applicativeAff)(m);
+            });
         });
     });
 };

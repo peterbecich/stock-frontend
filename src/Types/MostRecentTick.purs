@@ -79,6 +79,8 @@ getMostRecentTicks host = do
     m :: Map.Map UUID DateTime
     m = either (\_ -> Map.empty) id eitherMap
 
+  liftEff $ log $ show eitherMap
+
   pure m
 
 
